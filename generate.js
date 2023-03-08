@@ -157,7 +157,7 @@ const request = `
 # classNames=${JSON.stringify(options.classNames)}
 # dataTestId="${options.dataTestId}"
 # events=${JSON.stringify(options.events)}
-# Create a component, events file, sample css module file, sample jest test file, sample storybook file:
+# Create a component, events file, sample css module file, sample jest test file, sample storybook file and index file:
 
 `;
 

@@ -5,14 +5,13 @@ The following uses OpenAI Codex to generate example React.js component with styl
 By providing options like these:
 ```js
 const options = {
-  name: "OrderedList",
-  props: ["items", "type", "emoji"],
-  classNames: ["list", "listItem", "heading", "description"],
-  dataTestId: "my-ordered-list",
-  events: ["OnItemClick", "OnListClick"],
-  copy: ["headingText", "descriptionText"]
+  name: "QuestionBox",
+  props: ["questionContent", "author", "showActions", "options", ,"breadcrumbs", "copy", "comments"],
+  classNames: ["container", "content", "author", "actions", "comments", "options"],
+  dataTestId: "question-box",
+  events: ["OnAddAnswerClick", "OnSeeAnswersClick", "OnAddCommentClick", "OnAuthorMouseOver"],
+  copy: ["addAnswer", "seeAnswers", "addComment", "reportQuestion"],
 };
-
 ```
 Run `node generate.js`
 
@@ -20,161 +19,280 @@ We get a component, events file, sample css module file, sample jest test file, 
 
 ```tsx
     
-  // FILE: OrderedList.tsx
+    
 
-  import css from './OrderedList.module.css'
-  import {dispatch} from '@brainly/brainiac'
-  import {OrderedListEventsType} from './OrderedListEventsType';
+// FILE: QuestionBox.tsx
 
-  type PropsType = {
-    items: ReadonlyArray<{
-      heading: string;
-      description: string;
-    }>;
-    type: string;
-    emoji: string;
-  }
-  
-  const OrderedList = ({items, type, emoji}: PropsType) => { 
-    const handleItemClick = React.useCallback((e) => {
-      dispatch<OrderedListOnItemClickType>(e.target, [
-        OrderedListEventsType.ON_ITEM_CLICK,
-        {
-          someValue: type
-        }
-      ])
-    }, [type]);
+import * as React from 'react'
+import css from './QuestionBox.module.css'
+import {dispatch} from '@brainly/brainiac'
+import {QuestionBoxEventsType} from './QuestionBoxEventsType';
+import {Flex, Icon, Text} from 'brainly-style-guide'
 
-    const handleListClick = React.useCallback((e) => {
-      dispatch<OrderedListOnListClickType>(e.target, [
-        OrderedListEventsType.ON_LIST_CLICK,
-        {
-          someValue: emoji
-        }
-      ])
-    }, [emoji]);
+type PropsType = {
+  questionContent: string;
+  author: string;
+  showActions: boolean;
+  options: any;
+  breadcrumbs: any;
+  copy: Readonly<{
+    title: string;
+    addAnswer: string;
+    seeAnswers: string;
+    addComment: string;
+  }>
+  comments: any;
+}
 
-    return (
-      <ol className={css.list} onClick={handleListClick} data-testid="my-ordered-list">
-        {items.map((item, index) => (
-          <li className={css.listItem} onClick={handleItemClick} key={index}>
-            <span className={css.heading}>{item.heading}</span>
-            <span className={css.description}>{item.description}</span>
-          </li>
-        ))}
-      </ol> 
-    )
-  }
-
-  export default React.memo<PropsType>(OrderedList);
-
-  // FILE: OrderedListEventsType.ts
-
-  export enum OrderedListEventsType {
-    ON_ITEM_CLICK = 'BrnOrderedListOnItemClick',
-    ON_LIST_CLICK = 'BrnOrderedListOnListClick'
-  }
-
-  export type OrderedListOnItemClickType = [
-    OrderedListEventsType.ON_ITEM_CLICK,
-    {
-      someValue: string
-    }
-  ]
-
-  export type OrderedListOnListClickType = [
-    OrderedListEventsType.ON_LIST_CLICK,
-    {
-      someValue: string
-    }
-  ]
-
-  // FILE: OrderedList.module.css
-
-  .list {
-
-  }
-
-  .listItem {
-
-  }
-
-  .heading {
-
-  }
-
-  .description {
-
-  }
-
-  // FILE: OrderedList.spec.tsx
-  import {render, screen} from '@testing-library/react'
-  import '@testing-library/jest-dom'
-  import {OrderedListEventsType} from './OrderedListEventsType';
-  import {promiseFromEvent} from '@brainly/brainiac'
-
-  const defaultProps = {
-    items: [
+const QuestionBox = ({questionContent, author, showActions, options, breadcrumbs, copy, comments}: PropsType) => { 
+  const handleAddAnswerClick = React.useCallback((e) => {
+    dispatch<QuestionBoxOnAddAnswerClickType>(e.target, [
+      QuestionBoxEventsType.ON_ADD_ANSWER_CLICK,
       {
-        heading: "test heading",
-        description: "test description"
+        questionContent
       }
-    ],
-    type: "test type",
-    emoji: "test emoji"
+    ])
+  }, [questionContent]);
+
+  const handleSeeAnswersClick = React.useCallback((e) => {
+    dispatch<QuestionBoxOnSeeAnswersClickType>(e.target, [
+      QuestionBoxEventsType.ON_SEE_ANSWERS_CLICK,
+      {
+        questionContent
+      }
+    ])
+  }, [questionContent]);
+
+  const handleAddCommentClick = React.useCallback((e) => {
+    dispatch<QuestionBoxOnAddCommentClickType>(e.target, [
+      QuestionBoxEventsType.ON_ADD_COMMENT_CLICK,
+      {
+        questionContent
+      }
+    ])
+  }, [questionContent]);
+
+  const handleAuthorMouseOver = React.useCallback((e) => {
+    dispatch<QuestionBoxOnAuthorMouseOverType>(e.target, [
+      QuestionBoxEventsType.ON_AUTHOR_MOUSE_OVER,
+      {
+        author
+      }
+    ])
+  }, [author]);
+
+  return (
+    <Flex className={css.container} data-testid="question-box">
+      <Flex className={css.content}>
+        <Text>{questionContent}</Text>
+        <Flex className={css.author} onMouseOver={handleAuthorMouseOver}>
+          <Icon type="user" />
+          <Text>{author}</Text>
+        </Flex>
+        {showActions && (
+          <Flex className={css.actions}>
+            <Text onClick={handleAddAnswerClick}>{copy.addAnswer}</Text>
+            <Text onClick={handleSeeAnswersClick}>{copy.seeAnswers}</Text>
+            <Text onClick={handleAddCommentClick}>{copy.addComment}</Text>
+          </Flex>
+        )}
+        {options && (
+          <Flex className={css.options}>
+            {options.map((option, index) => (
+              <Text key={index}>{option}</Text>
+            ))}
+          </Flex>
+        )}
+        {breadcrumbs && (
+          <Flex className={css.breadcrumbs}>
+            {breadcrumbs.map((breadcrumb, index) => (
+              <Text key={index}>{breadcrumb}</Text>
+            ))}
+          </Flex>
+        )}
+        {comments && (
+          <Flex className={css.comments}>
+            {comments.map((comment, index) => (
+              <Text key={index}>{comment}</Text>
+            ))}
+          </Flex>
+        )}
+      </Flex>
+    </Flex>
+  )
+}
+
+export default React.memo<PropsType>(QuestionBox);
+
+// FILE: QuestionBoxEventsType.ts
+
+export enum QuestionBoxEventsType {
+  ON_ADD_ANSWER_CLICK = 'BrnQuestionBoxOnAddAnswerClick',
+  ON_SEE_ANSWERS_CLICK = 'BrnQuestionBoxOnSeeAnswersClick',
+  ON_ADD_COMMENT_CLICK = 'BrnQuestionBoxOnAddCommentClick',
+  ON_AUTHOR_MOUSE_OVER = 'BrnQuestionBoxOnAuthorMouseOver'
+}
+
+export type QuestionBoxOnAddAnswerClickType = [
+  QuestionBoxEventsType.ON_ADD_ANSWER_CLICK,
+  {
+    questionContent: string
   }
+]
+
+export type QuestionBoxOnSeeAnswersClickType = [
+  QuestionBoxEventsType.ON_SEE_ANSWERS_CLICK,
+  {
+    questionContent: string
+  }
+]
+
+export type QuestionBoxOnAddCommentClickType = [
+  QuestionBoxEventsType.ON_ADD_COMMENT_CLICK,
+  {
+    questionContent: string
+  }
+]
+
+export type QuestionBoxOnAuthorMouseOverType = [
+  QuestionBoxEventsType.ON_AUTHOR_MOUSE_OVER,
+  {
+    author: string
+  }
+]
+
+// FILE: QuestionBox.module.css
+
+.container {
+
+}
+
+.content {
+
+}
+
+.author {
+
+}
+
+.actions {
+
+}
+
+.comments {
+
+}
+
+.options {
+
+}
+
+.breadcrumbs {
+
+}
+
+// FILE: QuestionBox.spec.tsx
+import {render, screen} from '@testing-library/react'
+import '@testing-library/jest-dom'
+import {QuestionBoxEventsType} from './QuestionBoxEventsType';
+import {promiseFromEvent} from '@brainly/brainiac'
+import QuestionBox from './QuestionBox'
+
+const defaultProps = {
+  questionContent: "test questionContent",
+  author: "test author",
+  showActions: true,
+  options: ["option1", "option2"],
+  breadcrumbs: ["breadcrumb1", "breadcrumb2"],
+  copy: {
+    title: "test title",
+    addAnswer: "test addAnswer",
+    seeAnswers: "test seeAnswers",
+    addComment: "test addComment"
+  },
+  comments: ["comment1", "comment2"]
+}
   
 
-  describe("<OrderedList />", () => {
-    it('renders OrderedList', async () => {
-      render(<OrderedList {...defaultProps} />)
+describe("<QuestionBox />", () => {
+  it('renders QuestionBox', async () => {
+    render(<QuestionBox {...defaultProps} />)
   
-      expect(screen.getByTestId('my-ordered-list')).toBeInTheDocument();
-    })
-
-    it('fires OnItemClick event', async () => {
-      render(<OrderedList {...defaultProps} />)
-  
-      const eventPromise = promiseFromEvent(OrderedListEventsType.ON_ITEM_CLICK);
-      const {detail: eventDetail} = await eventPromise();
-
-      expect(eventDetail).toEqual({someValue: defaultProps.type})
-    })
-
-    it('fires OnListClick event', async () => {
-      render(<OrderedList {...defaultProps} />)
-  
-      const eventPromise = promiseFromEvent(OrderedListEventsType.ON_LIST_CLICK);
-      const {detail: eventDetail} = await eventPromise();
-
-      expect(eventDetail).toEqual({someValue: defaultProps.emoji})
-    })
+    expect(screen.getByTestId('question-box')).toBeInTheDocument();
   })
 
-  // FILE: OrderedList.stories.tsx
-  import {storiesOf} from '@storybook/react'
-  import {OrderedList} from './OrderedList'
-  import {text, number, object} from '@storybook/addon-knobs'
+  it('fires OnAddAnswerClick event', async () => {
+    render(<QuestionBox {...defaultProps} />)
+  
+    const eventPromise = promiseFromEvent(QuestionBoxEventsType.ON_ADD_ANSWER_CLICK);
+    const {detail: eventDetail} = await eventPromise();
 
-  storiesOf('OrderedList', module)
-    .add('default', () => (
-      <OrderedList 
-        items={
-          object('items', [
-            {
-              heading: "test heading",
-              description: "test description"
-            }
-          ])
-        }
-        type={text('type', 'test type')} 
-        emoji={text('emoji', 'test emoji')}
-      />
-    ))
+    expect(eventDetail).toEqual({questionContent: defaultProps.questionContent})
+  })
 
-  // FILE: index.ts
-  export {default as OrderedList} from './OrderedList'
-  export * from './OrderedListEventsType';
+  it('fires OnSeeAnswersClick event', async () => {
+    render(<QuestionBox {...defaultProps} />)
+  
+    const eventPromise = promiseFromEvent(QuestionBoxEventsType.ON_SEE_ANSWERS_CLICK);
+    const {detail: eventDetail} = await eventPromise();
+
+    expect(eventDetail).toEqual({questionContent: defaultProps.questionContent})
+  })
+
+  it('fires OnAddCommentClick event', async () => {
+    render(<QuestionBox {...defaultProps} />)
+  
+    const eventPromise = promiseFromEvent(QuestionBoxEventsType.ON_ADD_COMMENT_CLICK);
+    const {detail: eventDetail} = await eventPromise();
+
+    expect(eventDetail).toEqual({questionContent: defaultProps.questionContent})
+  })
+
+  it('fires OnAuthorMouseOver event', async () => {
+    render(<QuestionBox {...defaultProps} />)
+  
+    const eventPromise = promiseFromEvent(QuestionBoxEventsType.ON_AUTHOR_MOUSE_OVER);
+    const {detail: eventDetail} = await eventPromise();
+
+    expect(eventDetail).toEqual({author: defaultProps.author})
+  })
+})
+
+// FILE: QuestionBox.stories.tsx
+import {storiesOf} from '@storybook/react'
+import QuestionBox from './QuestionBox'
+import {text, boolean, array, object} from '@storybook/addon-knobs'
+
+storiesOf('QuestionBox', module)
+  .add('default', () => (
+    <QuestionBox 
+      questionContent={text('questionContent', 'test questionContent')} 
+      author={text('author', 'test author')}
+      showActions={boolean('showActions', true)}
+      options={
+        array('options', ["option1", "option2"])
+      }
+      breadcrumbs={
+        array('breadcrumbs', ["breadcrumb1", "breadcrumb2"])
+      }
+      copy={
+        object('copy', {      
+          title: "test title",
+          addAnswer: "test addAnswer",
+          seeAnswers: "test seeAnswers",
+          addComment: "test addComment"
+        })
+      }
+      comments={
+        array('comments', ["comment1", "comment2"])
+      }
+    />
+  ))
+
+// FILE: index.ts
+export {default as QuestionBox} from './QuestionBox'
+export * from './QuestionBoxEventsType';
+
 
   
 ```

@@ -14,28 +14,32 @@ const context = `
 # User also provides "classNames" that are used for styling elements. The project is using css modules.
 # User also provides "dataTestId" that is passed to main component and is used to find given element in tests.
 # User also provides "events" which are names of events that will be dispatched in component.
-# User also provides "copy" which is record of strings. Those string are used to display text in component.
-# This is example output when user provided name="Button", props=["imageSrc","type"], classNames=["button", "image", "label"], data-testid="button-test-id", events=["OnClick"], copy=["altText", "label"]:
+# User also provides "copy" which is record of strings. Those strings are used to display text in component instead of using hardcoded translations. Copy is later included in "props".
+# The project uses 'brainly-style-guide' components library containing some of the common building blocks, like: Flex, Accordion, Dropdown, Form, Icon and many more.
+# This is example output when user provided name="Button", props=["imageSrc","type"], classNames=["button", "image", "label"], dataTestId="button-test-id", events=["OnClick"], copy=["altText", "label", "tooltipText"]:
 
 `;
 
 const example = `
   // FILE: Button.tsx
 
+  import * as React from 'react'
   import css from './Button.module.css'
   import {dispatch} from '@brainly/brainiac'
   import {ButtonEventsType} from './ButtonEventsType';
+  import {Button, Text, Tooltip} from 'brainly-style-guide'
 
   type PropsType = {
     imageSrc: string;
     someId: number;
-    copy: ReadonlyArray<{
+    copy: Readonly<{
       altText: string;
       label: string;
+      tooltipText: string;
     }>
   }
   
-  const Button = ({label, someId, imageSrc, copy}: PropsType) => { 
+  const Button = ({imageSrc, someId, copy}: PropsType) => { 
     const handleClick = React.useCallback((e) => {
       dispatch<ButtonOnClickType>(e.target, [
         ButtonEventsType.ON_CLICK,
@@ -46,10 +50,12 @@ const example = `
     }, [someId]);
 
     return (
-      <button className={css.button} onClick={handleClick} data-testid="button-test-id">
-        <img alt={copy.altText} src={imageSrc}/>
-        <span className={css.label}>{copy.label}</span>
-      </button> 
+      <Tooltip content={copy.tooltipText}>
+        <Button className={css.button} onClick={handleClick} data-testid="button-test-id">
+          <img alt={copy.altText} src={imageSrc}/>
+          <Text className={css.label}>{copy.label}</Text>
+        </Button> 
+      </Tooltip>
     )
   }
 
@@ -87,6 +93,7 @@ const example = `
   import '@testing-library/jest-dom'
   import {ButtonEventsType} from './ButtonEventsType';
   import {promiseFromEvent} from '@brainly/brainiac'
+  import Button from './Button'
 
   const defaultProps = {
     imageSrc: "test imageSrc",
@@ -94,6 +101,7 @@ const example = `
     copy: {
       altText: "test altText",
       label: "test label",
+      tooltipText: "test tooltipText"
     }
   }
   
@@ -117,7 +125,7 @@ const example = `
 
   // FILE: Button.stories.tsx
   import {storiesOf} from '@storybook/react'
-  import {Button} from './Button'
+  import Button from './Button'
   import {text, number, object} from '@storybook/addon-knobs'
 
   storiesOf('Button', module)
@@ -128,7 +136,8 @@ const example = `
         copy={
           object('copy', {      
             altText: "test altText",
-            label: "test label"
+            label: "test label",
+            tooltipText: "test tooltipText"
           })
         }
       />
@@ -142,12 +151,12 @@ const example = `
   `;
 
 const options = {
-  name: "OrderedList",
-  props: ["items", "type", "emoji"],
-  classNames: ["list", "listItem", "heading", "description"],
-  dataTestId: "my-ordered-list",
-  events: ["OnItemClick", "OnListClick"],
-  copy: ["headingText", "descriptionText"]
+  name: "QuestionBox",
+  props: ["questionContent", "author", "showActions", "options", ,"breadcrumbs", "copy", "comments"],
+  classNames: ["container", "content", "author", "actions", "comments", "options"],
+  dataTestId: "question-box",
+  events: ["OnAddAnswerClick", "OnSeeAnswersClick", "OnAddCommentClick", "OnAuthorMouseOver"],
+  copy: ["addAnswer", "seeAnswers", "addComment", "reportQuestion"],
 };
 
 const request = `
@@ -162,22 +171,27 @@ const request = `
 `;
 
 const generate = async () => {
-  const response = await openai.createCompletion({
-    model: "code-davinci-002",
-    prompt: `
+  const response = await openai.createChatCompletion({
+    model: "gpt-3.5-turbo",
+    temperature: 0,
+    max_tokens: 2000,
+    top_p: 1.0,
+    frequency_penalty: 0.0,
+    presence_penalty: 0.0,
+    messages: [
+      {
+        role: "user",
+        content: `
     ${context} 
     ${example} 
     ${request}
     `,
-    temperature: 0,
-    max_tokens: 1500,
-    top_p: 1.0,
-    frequency_penalty: 0.0,
-    presence_penalty: 0.0,
+      },
+    ],
     stop: ["END_MARK", "#", "// END_MARK"],
   });
 
-  const result = response.data.choices[0].text;
+  const result = response.data.choices[0].message.content;
 
   console.log(result, response.data);
   fs.writeFile(`${options.name}.tsx`, result, { flag: "w+" }, (err) => {
